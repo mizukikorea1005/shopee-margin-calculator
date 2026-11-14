@@ -173,7 +173,7 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
     </div>
     <div class="small">
       <ul class="plain">
-        <li><b>정산 환율</b>: 쇼피가 현지 통화를 USD로 바꿀 때 실제 적용한 환율(2026-11 지급 기록). MX는 최근 지급 기록이 없어 추정값입니다.</li>
+        <li><b>정산 환율</b>: 쇼피가 현지 통화를 USD로 바꿀 때 실제 적용한 환율(2026-11 지급 기록). MX는 2026-10-21 지급 1건 기준이고, 수수료는 주문 1건뿐이라 추정값입니다.</li>
         <li><b>판매+서비스</b>, <b>거래</b>, <b>기타</b> 수수료는 2026-09~11 실제 정산 421건에서 판매자 가격(세전) 대비로 잰 실효 요율입니다. 거래 수수료는 세금 포함 가격에 붙기 때문에 공지 요율보다 높습니다. "기타"는 정산서의 광고 충전/기술지원 수수료 항목입니다.</li>
         <li><b>고정비</b>: VN 통관신고 수수료 ₫10,000, TH 주문처리 ฿1.</li>
         <li><b>손실 여유분</b>: 반품·압수·발송 후 취소 손실을 판매가 대비로 미리 떼어 둡니다. 실제 손실률: 전체 0.7%, VN 19.5%(세관 압수 3건), BR 1.7%.</li>
@@ -228,9 +228,9 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
     VN: { name: "베트남", cur: "VND", usd: 0.0000389469, fee: 23.15, txn: 6.67, other: 0, pre: 0, fixed: 10000, loss: 5, tax: 10 },
     TW: { name: "대만", cur: "TWD", usd: 0.03007, fee: 12.35, txn: 2.53, other: 0, pre: 3, fixed: 0, loss: 1, tax: 0 },
     BR: { name: "브라질", cur: "BRL", usd: 0.17433, fee: 13.35, txn: 2.0, other: 2.0, pre: 0, fixed: 0, loss: 2, tax: 0 },
-    MX: { name: "멕시코", cur: "MXN", usd: 0.054, fee: 14.95, txn: 2.39, other: 0, pre: 0, fixed: 0, loss: 1, tax: 16, estimated: true }
+    MX: { name: "멕시코", cur: "MXN", usd: 0.05673, fee: 14.95, txn: 2.39, other: 0, pre: 0, fixed: 0, loss: 1, tax: 16, estimated: true }
   };
-  const DEFAULT_CFG = { usdKrw: 1370, fxCons: 5, payoneer: 0.9, markets: DEFAULT_MARKETS };
+  const DEFAULT_CFG = { usdKrw: 1300, fxCons: 5, payoneer: 0.9, markets: DEFAULT_MARKETS };
   const EXAMPLES = [
     { id: 1, name: "(예시) 쿠키런 플러시 키링", cost: 9000, dom: 0, pack: 500, weight: 110, mode: "pct_sale", value: 25, pre: false },
     { id: 2, name: "(예시) 포켓몬 카드 프로모 1장", cost: 6000, dom: 0, pack: 300, weight: 80, mode: "krw", value: 4000, pre: false },
@@ -238,8 +238,13 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
   ];
 
   const clone = (o) => JSON.parse(JSON.stringify(o));
-  let state = load() || { cfg: clone(DEFAULT_CFG), products: clone(EXAMPLES), selected: 1, mine: {} };
+  let state = load() || { cfg: clone(DEFAULT_CFG), products: clone(EXAMPLES), selected: 1, mine: {}, cfgVersion: 2 };
   for (const c of CODES) if (!state.cfg.markets[c]) state.cfg.markets[c] = clone(DEFAULT_MARKETS[c]);
+  if ((state.cfgVersion || 1) < 2) {
+    if (Number(state.cfg.usdKrw) === 1370) state.cfg.usdKrw = 1300;
+    if (state.cfg.markets.MX && Number(state.cfg.markets.MX.usd) === 0.054) state.cfg.markets.MX.usd = 0.05673;
+    state.cfgVersion = 2;
+  }
 
   function load() { try { const raw = localStorage.getItem(STORE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } }
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} scheduleRemote(); }
