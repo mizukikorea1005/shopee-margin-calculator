@@ -66,6 +66,12 @@ tr.sel td { background: var(--accent-soft); }
 .prod td.name input { min-width: 180px; }
 .prod td select { min-width: 96px; }
 .tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+table.sum { border: 1px solid var(--line); border-radius: 8px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+table.sum th, table.sum td { text-align: right; font-family: var(--f-num); font-size: 13px; padding: 7px 10px; }
+table.sum th:first-child, table.sum td:first-child { text-align: left; font-family: var(--f-body); color: var(--muted); font-weight: 500; position: sticky; left: 0; background: var(--panel); }
+table.sum thead th { background: var(--bg); color: var(--ink); font-size: 12px; text-transform: none; letter-spacing: 0; }
+table.sum tr:last-child td { border-bottom: 0; }
+table.sum td.profit-row { font-weight: 600; }
 .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
 .mk { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 8px; min-width: 0; background: var(--panel); }
 .mk .t { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -140,8 +146,9 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
         <button id="copyAll" type="button">전체 상품 가격표 복사</button>
       </div>
     </div>
+    <div class="scroll"><table class="sum" id="summary"></table></div>
     <div class="board" id="board"></div>
-    <p class="small">권장가 = 쇼피에 입력하는 <b>판매자 가격(세전)</b>. 쇼피가 세금을 붙여 구매자에게 보여 주는 가격은 "구매자가"로 따로 표시합니다(추정). 각 카드의 "내 판매가"에 실제 가격을 넣으면 그 가격의 이익을 계산합니다.</p>
+    <p class="small">권장가 = 쇼피에 입력하는 <b>판매자 가격(세전)</b>. 쇼피가 세금을 붙여 구매자에게 보여 주는 가격은 "구매자가"로 따로 표시합니다(추정). 각 카드의 "내 판매가"에 실제 가격을 넣으면 그 가격의 이익을 계산합니다(요약표에 * 표시).</p>
   </section>
 
   <section class="card">
@@ -423,6 +430,7 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
     if (!p) { board.innerHTML = '<p class="small">상품을 추가하세요.</p>'; return; }
     $("boardTitle").textContent = `국가별 권장 판매가 · ${p.name || "이름 없는 상품"}`;
     state.mine[p.id] = state.mine[p.id] || {};
+    renderSummary(p);
     for (const code of CODES) {
       const m = state.cfg.markets[code];
       const rec = recommend(code, p);
@@ -463,6 +471,29 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
       });
       board.appendChild(card);
     }
+  }
+
+  function renderSummary(p) {
+    const cols = CODES.map((code) => {
+      const m = state.cfg.markets[code];
+      const rec = recommend(code, p);
+      if (rec.error) return { code, m, err: true };
+      const mv = state.mine?.[p.id]?.[code];
+      const res = mv ? evaluate(code, p, num(mv)) : rec;
+      return { code, m, res, st: status(code, res, p), mine: !!mv };
+    });
+    const cell = (c, fn) => c.err ? "<td>—</td>" : `<td>${fn(c)}</td>`;
+    const color = (c) => c.res.profit < 0 ? "var(--bad)" : "var(--good)";
+    $("summary").innerHTML = `
+      <thead><tr><th>한눈에 보기</th>${cols.map((c) => `<th>${c.code} · ${c.m.name}</th>`).join("")}</tr></thead>
+      <tbody>
+        <tr><td>판매가</td>${cols.map((c) => cell(c, (c) => `${c.m.cur} ${fmtLocal(c.res.price, c.m.cur)}${c.mine ? "*" : ""}`)).join("")}</tr>
+        <tr><td>원화 판매가</td>${cols.map((c) => cell(c, (c) => fmtKrw(c.res.saleKrw))).join("")}</tr>
+        <tr><td>원화 입금</td>${cols.map((c) => cell(c, (c) => fmtKrw(c.res.payoutKrw))).join("")}</tr>
+        <tr><td>순이익</td>${cols.map((c) => c.err ? "<td>—</td>" : `<td class="profit-row" style="color:${color(c)}">${fmtKrw(c.res.profit)}</td>`).join("")}</tr>
+        <tr><td>이익률</td>${cols.map((c) => c.err ? "<td>—</td>" : `<td style="color:${color(c)}">${pct(c.res.margin)}</td>`).join("")}</tr>
+        <tr><td>상태</td>${cols.map((c) => c.err ? '<td><span class="pill bad">계산 불가</span></td>' : `<td><span class="pill ${c.st.level}">${c.st.label}</span></td>`).join("")}</tr>
+      </tbody>`;
   }
 
   function renderMatrix() {
