@@ -175,9 +175,10 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
       <ul class="plain">
         <li><b>정산 환율</b>: 쇼피가 현지 통화를 USD로 바꿀 때 실제 적용한 환율(2026-11 지급 기록). MX는 2026-10-21 지급 1건 기준이고, 수수료는 주문 1건뿐이라 추정값입니다.</li>
         <li><b>판매+서비스</b>, <b>거래</b>, <b>기타</b> 수수료는 2026-09~11 실제 정산 421건에서 판매자 가격(세전) 대비로 잰 실효 요율입니다. 거래 수수료는 세금 포함 가격에 붙기 때문에 공지 요율보다 높습니다. "기타"는 정산서의 광고 충전/기술지원 수수료 항목입니다.</li>
-        <li><b>고정비</b>: VN 통관신고 수수료 ₫10,000, TH 인프라 수수료 ฿1.</li>
+        <li><b>보수적 기본값</b>: 공식 요율과 실측 중 큰 값을 씁니다. SG 스파이크 데이 1% 포함, MX 공식 15.35%, VN 트래픽 성장 지원 수수료(TGF) 2%×세금 포함 2.2%, MY 판매자 배송비에 SST 8%.</li>
+        <li><b>고정비</b>: VN 통관신고 ₫10,000 + 인프라 ₫3,000, PH 인프라 ₱5(면제 조건 무시), MY 플랫폼 지원 RM0.54, TH 인프라 ฿1.07.</li>
         <li><b>공식 근거</b>(shopee.kr/edu, 2026-11-14 확인): "기타" 2%는 트래픽 성장 지원 수수료(TGF, 26750). 거래 수수료는 세금·구매자 배송비 포함 금액 기준(10624, 17126). <b>TW 판매 수수료는 2026-12-11부터 14.15%</b>로 올라 미리 반영했습니다. PH 배송 서비스 수수료 상한은 2026-11-01부터 ₱200입니다(24904 후속 공지).</li>
-        <li><b>손실 여유분</b>: 반품·압수·발송 후 취소 손실을 판매가 대비로 미리 떼어 둡니다. 실제 손실률: 전체 0.7%, VN 19.5%(세관 압수 3건), BR 1.7%.</li>
+        <li><b>손실 여유분</b>: 반품·압수·발송 후 취소 손실을 판매가 대비로 미리 떼어 둡니다. 기본 2%, BR 3%, VN 5%. 실제 손실률: 전체 0.7%, VN 19.5%(세관 압수 3건), BR 1.7%.</li>
         <li><b>세금 표시</b>: 구매자가 계산에만 쓰입니다. 쇼피가 붙인 세금은 정산에서 같은 만큼 빠지므로 이익에는 영향이 없습니다. TH는 상품별 16~34%로 다릅니다.</li>
       </ul>
     </div>
@@ -222,14 +223,14 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
   const STORE_KEY = "shopee-margin-calc-v1";
   const CODES = ["SG", "MY", "PH", "TH", "VN", "TW", "BR", "MX"];
   const DEFAULT_MARKETS = {
-    SG: { name: "싱가포르", cur: "SGD", usd: 0.77679, fee: 16.33, txn: 3.27, other: 2.18, pre: 3, fixed: 0, loss: 1, tax: 9 },
-    MY: { name: "말레이시아", cur: "MYR", usd: 0.24567, fee: 16.85, txn: 4.29, other: 2.38, pre: 2.16, fixed: 0, loss: 1, tax: 10 },
-    PH: { name: "필리핀", cur: "PHP", usd: 0.01576, fee: 19.5, txn: 2.24, other: 0, pre: 0, fixed: 0, loss: 1, tax: 0 },
-    TH: { name: "태국", cur: "THB", usd: 0.02971, fee: 21.79, txn: 4.3, other: 2.86, pre: 0, fixed: 1, loss: 1, tax: 34 },
-    VN: { name: "베트남", cur: "VND", usd: 0.0000389469, fee: 23.15, txn: 6.67, other: 0, pre: 0, fixed: 10000, loss: 5, tax: 10 },
-    TW: { name: "대만", cur: "TWD", usd: 0.03007, fee: 14.15, txn: 2.53, other: 0, pre: 3, fixed: 0, loss: 1, tax: 0 },
-    BR: { name: "브라질", cur: "BRL", usd: 0.17433, fee: 13.35, txn: 2.0, other: 2.0, pre: 0, fixed: 0, loss: 2, tax: 0 },
-    MX: { name: "멕시코", cur: "MXN", usd: 0.05673, fee: 14.95, txn: 2.39, other: 0, pre: 0, fixed: 0, loss: 1, tax: 16, estimated: true }
+    SG: { name: "싱가포르", cur: "SGD", usd: 0.77679, fee: 16.35, txn: 3.27, other: 2.18, pre: 3, fixed: 0, shipTax: 0, loss: 2, tax: 9 },
+    MY: { name: "말레이시아", cur: "MYR", usd: 0.24567, fee: 16.85, txn: 4.29, other: 2.38, pre: 2.16, fixed: 0.54, shipTax: 8, loss: 2, tax: 10 },
+    PH: { name: "필리핀", cur: "PHP", usd: 0.01576, fee: 19.5, txn: 2.24, other: 0, pre: 0, fixed: 5, shipTax: 0, loss: 2, tax: 0 },
+    TH: { name: "태국", cur: "THB", usd: 0.02971, fee: 21.79, txn: 4.3, other: 2.86, pre: 0, fixed: 1.07, shipTax: 0, loss: 2, tax: 34 },
+    VN: { name: "베트남", cur: "VND", usd: 0.0000389469, fee: 23.15, txn: 6.67, other: 2.2, pre: 0, fixed: 13000, shipTax: 0, loss: 5, tax: 10 },
+    TW: { name: "대만", cur: "TWD", usd: 0.03007, fee: 14.15, txn: 2.53, other: 0, pre: 3, fixed: 0, shipTax: 0, loss: 2, tax: 0 },
+    BR: { name: "브라질", cur: "BRL", usd: 0.17433, fee: 13.35, txn: 2.0, other: 2.0, pre: 0, fixed: 0, shipTax: 0, loss: 3, tax: 0 },
+    MX: { name: "멕시코", cur: "MXN", usd: 0.05673, fee: 15.35, txn: 2.39, other: 0, pre: 0, fixed: 0, shipTax: 0, loss: 2, tax: 16, estimated: true }
   };
   const DEFAULT_CFG = { usdKrw: 1300, fxCons: 5, payoneer: 0.9, markets: DEFAULT_MARKETS };
   const EXAMPLES = [
@@ -239,7 +240,7 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
   ];
 
   const clone = (o) => JSON.parse(JSON.stringify(o));
-  let state = load() || { cfg: clone(DEFAULT_CFG), products: clone(EXAMPLES), selected: 1, mine: {}, cfgVersion: 3 };
+  let state = load() || { cfg: clone(DEFAULT_CFG), products: clone(EXAMPLES), selected: 1, mine: {}, cfgVersion: 4 };
   for (const c of CODES) if (!state.cfg.markets[c]) state.cfg.markets[c] = clone(DEFAULT_MARKETS[c]);
   if ((state.cfgVersion || 1) < 2) {
     if (Number(state.cfg.usdKrw) === 1370) state.cfg.usdKrw = 1300;
@@ -249,6 +250,10 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
   if (state.cfgVersion < 3) {
     if (state.cfg.markets.TW && Number(state.cfg.markets.TW.fee) === 12.35) state.cfg.markets.TW.fee = 14.15;
     state.cfgVersion = 3;
+  }
+  if (state.cfgVersion < 4) {
+    for (const c of CODES) { const keepUsd = state.cfg.markets[c]?.usd; state.cfg.markets[c] = { ...clone(DEFAULT_MARKETS[c]), usd: keepUsd ?? DEFAULT_MARKETS[c].usd }; }
+    state.cfgVersion = 4;
   }
 
   function load() { try { const raw = localStorage.getItem(STORE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; } }
@@ -349,7 +354,8 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
     const r = (num(m.fee) + num(m.txn) + num(m.other) + (p.pre ? num(m.pre) : 0)) / 100;
     const loss = num(m.loss) / 100;
     const cg = chargeGram(p);
-    const ship = { ...shipLocal(code, cg.gram), gram: cg.gram, byVolume: cg.byVolume };
+    const sl = shipLocal(code, cg.gram);
+    const ship = { ...sl, fee: sl.fee * (1 + num(m.shipTax) / 100), gram: cg.gram, byVolume: cg.byVolume };
     const payoutLocal = price * (1 - r) - num(m.fixed) - ship.fee;
     const payoutKrw = payoutLocal * fx;
     const lossKrw = price * loss * fx;
@@ -365,7 +371,8 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
     if (fx <= 0) return { error: "환율을 확인하세요" };
     const r = (num(m.fee) + num(m.txn) + num(m.other) + (p.pre ? num(m.pre) : 0)) / 100;
     const loss = num(m.loss) / 100;
-    const ship = shipLocal(code, chargeGram(p).gram);
+    const sl = shipLocal(code, chargeGram(p).gram);
+    const ship = { ...sl, fee: sl.fee * (1 + num(m.shipTax) / 100) };
     const base = costKrw(p) + (num(m.fixed) + ship.fee) * fx;
     let denom, numer;
     if (p.mode === "pct_sale") { denom = fx * (1 - r - loss - num(p.value) / 100); numer = base; }
@@ -531,7 +538,7 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
 
   function renderCfg() {
     $("usdKrw").value = state.cfg.usdKrw; $("fxCons").value = state.cfg.fxCons; $("payoneer").value = state.cfg.payoneer;
-    const cols = [["usd", "정산환율 USD/현지", "any"], ["fee", "판매+서비스 %", "0.01"], ["txn", "거래 %", "0.01"], ["other", "기타 %", "0.01"], ["pre", "프리오더 %", "0.01"], ["fixed", "고정비(현지)", "any"], ["loss", "손실 여유분 %", "0.1"], ["tax", "세금 표시 %", "0.1"]];
+    const cols = [["usd", "정산환율 USD/현지", "any"], ["fee", "판매+서비스 %", "0.01"], ["txn", "거래 %", "0.01"], ["other", "기타 %", "0.01"], ["pre", "프리오더 %", "0.01"], ["fixed", "고정비(현지)", "any"], ["shipTax", "배송비 세금 %", "0.1"], ["loss", "손실 여유분 %", "0.1"], ["tax", "세금 표시 %", "0.1"]];
     let html = `<thead><tr><th>국가</th><th>통화</th>${cols.map((c) => `<th class="num">${c[1]}</th>`).join("")}<th class="num">원/현지</th></tr></thead><tbody>`;
     for (const code of CODES) {
       const m = state.cfg.markets[code];
