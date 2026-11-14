@@ -148,7 +148,7 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
     </div>
     <div class="scroll"><table class="sum" id="summary"></table></div>
     <div class="board" id="board"></div>
-    <p class="small">권장가 = 쇼피에 입력하는 <b>판매자 가격(세전)</b>. 쇼피가 세금을 붙여 구매자에게 보여 주는 가격은 "구매자가"로 따로 표시합니다(추정). 각 카드의 "내 판매가"에 실제 가격을 넣으면 그 가격의 이익을 계산합니다(요약표에 * 표시).</p>
+    <p class="small"><b>리스팅 가격</b> = 셀러센터 Shop SKU 가격(Price) 칸에 그대로 넣는 가격(세전, 할인 0% 기준). 쇼피가 세금을 붙여 구매자에게 보여 주는 가격은 "구매자가"로 따로 표시합니다(추정). 각 카드의 "내 판매가"에 실제 가격을 넣으면 그 가격의 이익을 계산합니다(요약표에 * 표시).</p>
   </section>
 
   <section class="card">
@@ -449,7 +449,7 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
         <div class="t"><span class="code">${code} · ${m.name}</span><span class="pill ${st.level}">${st.label}</span></div>
         <div>
           <div class="price">${m.cur} ${fmtLocal(res.price, m.cur)}</div>
-          <div class="buyer">${mineVal ? "내 판매가 기준" : "권장 판매자가"} · 구매자가 약 ${m.cur} ${fmtLocal(res.buyer, m.cur)}</div>
+          <div class="buyer">${mineVal ? "내 판매가 기준" : "권장 리스팅 가격 (셀러센터 입력가)"} · 구매자가 약 ${m.cur} ${fmtLocal(res.buyer, m.cur)}</div>
         </div>
         <dl>
           <dt>원화 환산 판매가</dt><dd>${fmtKrw(res.saleKrw)}</dd>
@@ -487,7 +487,7 @@ textarea { font-family: var(--f-num); font-size: 12px; min-height: 90px; }
     $("summary").innerHTML = `
       <thead><tr><th>한눈에 보기</th>${cols.map((c) => `<th>${c.code} · ${c.m.name}</th>`).join("")}</tr></thead>
       <tbody>
-        <tr><td>판매가</td>${cols.map((c) => cell(c, (c) => `${c.m.cur} ${fmtLocal(c.res.price, c.m.cur)}${c.mine ? "*" : ""}`)).join("")}</tr>
+        <tr><td>리스팅 가격 (셀러센터 입력가)</td>${cols.map((c) => cell(c, (c) => `${c.m.cur} ${fmtLocal(c.res.price, c.m.cur)}${c.mine ? "*" : ""}`)).join("")}</tr>
         <tr><td>원화 판매가</td>${cols.map((c) => cell(c, (c) => fmtKrw(c.res.saleKrw))).join("")}</tr>
         <tr><td>원화 입금</td>${cols.map((c) => cell(c, (c) => fmtKrw(c.res.payoutKrw))).join("")}</tr>
         <tr><td>순이익</td>${cols.map((c) => c.err ? "<td>—</td>" : `<td class="profit-row" style="color:${color(c)}">${fmtKrw(c.res.profit)}</td>`).join("")}</tr>
